@@ -1,25 +1,563 @@
-<html>
+<!doctype html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>C_Pokemon解析</title>
+<head>
+  <meta charset="UTF-8">
+  <title>C班 ポケモンオープンデータ調査</title>
+  <style>
+    :root {
+      --ink: #1f2a44;
+      --muted: #5e6c84;
+      --line: #d7e0ee;
+      --paper: #fffdf6;
+      --card: #ffffff;
+      --red: #e8483f;
+      --blue: #2775d1;
+      --yellow: #ffd247;
+      --navy: #18345f;
+      --green: #36a56f;
+      --shadow: 0 16px 34px rgba(24, 52, 95, 0.14);
+    }
 
-        <style>
-            body{
-            background-color:rgb(255,255,140)
-            }
-        </style>
-    </head>
+    * {
+      box-sizing: border-box;
+    }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(255, 210, 71, 0.18) 1px, transparent 1px),
+        linear-gradient(rgba(255, 210, 71, 0.18) 1px, transparent 1px),
+        linear-gradient(180deg, #f7fbff 0%, #eef5ff 48%, #fff8dd 100%);
+      background-size: 34px 34px, 34px 34px, auto;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      line-height: 1.8;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .wrap {
+      width: 1180px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 4px solid var(--yellow);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 10px 24px rgba(24, 52, 95, 0.08);
+    }
+
+    .topbar .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 74px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--navy);
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .ball {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border: 5px solid var(--navy);
+      border-radius: 50%;
+      background: linear-gradient(#e8483f 0 47%, var(--navy) 47% 55%, #fff 55% 100%);
+      box-shadow: inset 0 0 0 4px #fff;
+    }
+
+    .ball::after {
+      content: "";
+      position: absolute;
+      inset: 11px;
+      border: 4px solid var(--navy);
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .nav a {
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 16px;
+      background: #fff;
+      color: var(--navy);
+    }
+
+    .nav a:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .hero {
+      padding: 54px 0 44px;
+    }
+
+    .hero-panel {
+      display: grid;
+      grid-template-columns: 1.04fr 0.96fr;
+      gap: 42px;
+      align-items: center;
+      border: 4px solid var(--navy);
+      border-radius: 18px;
+      padding: 38px;
+      background:
+        linear-gradient(135deg, rgba(255, 210, 71, 0.92), rgba(255, 255, 255, 0.96) 46%),
+        var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 14px;
+      border: 2px solid var(--navy);
+      border-radius: 999px;
+      padding: 5px 14px;
+      background: var(--red);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: var(--navy);
+      font-size: 58px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      width: 610px;
+      margin-bottom: 24px;
+      color: #344563;
+      font-size: 20px;
+      line-height: 1.9;
+    }
+
+    .source {
+      display: grid;
+      grid-template-columns: 94px 1fr;
+      gap: 18px;
+      align-items: center;
+      width: 560px;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .source img {
+      width: 94px;
+      border-radius: 10px;
+    }
+
+    .source p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .hero-card {
+      border: 3px solid var(--navy);
+      border-radius: 16px;
+      padding: 18px;
+      background: #fff;
+      box-shadow: 0 12px 22px rgba(24, 52, 95, 0.12);
+    }
+
+    .hero-card img {
+      width: 100%;
+      height: 330px;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-bottom: 36px;
+    }
+
+    .overview-card {
+      min-height: 170px;
+      border: 3px solid var(--navy);
+      border-radius: 16px;
+      padding: 22px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .overview-card strong {
+      display: inline-grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      margin-bottom: 14px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .overview-card h2 {
+      margin-bottom: 8px;
+      color: var(--navy);
+      font-size: 22px;
+      line-height: 1.45;
+    }
+
+    .overview-card p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    main {
+      padding-bottom: 62px;
+    }
+
+    .section {
+      margin-bottom: 42px;
+      border: 4px solid var(--navy);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 20px;
+      align-items: center;
+      padding: 28px 32px;
+      border-bottom: 4px solid var(--yellow);
+      background: linear-gradient(90deg, var(--blue), #2f9cea);
+      color: #fff;
+    }
+
+    .section:nth-of-type(2) .section-head {
+      background: linear-gradient(90deg, var(--red), #f47f42);
+    }
+
+    .section:nth-of-type(3) .section-head {
+      background: linear-gradient(90deg, var(--green), #4bb7a4);
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 66px;
+      height: 66px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      background: var(--navy);
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .section-head h2 {
+      margin-bottom: 4px;
+      font-size: 32px;
+      line-height: 1.35;
+    }
+
+    .section-head p {
+      width: 910px;
+      margin-bottom: 0;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .figure-layout {
+      display: grid;
+      gap: 26px;
+      padding: 30px 32px 34px;
+    }
+
+    .figure-layout.two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .figure-layout.three {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .figure {
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #f9fbff;
+    }
+
+    .figure.wide {
+      grid-column: 1 / -1;
+    }
+
+    .figure h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      padding: 14px 18px;
+      border-bottom: 2px solid var(--line);
+      background: #fff;
+      color: var(--navy);
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--navy);
+      border-radius: 50%;
+      background: var(--yellow);
+      flex: 0 0 auto;
+    }
+
+    .image-box {
+      display: grid;
+      place-items: center;
+      min-height: 420px;
+      padding: 18px;
+      background: #fff;
+    }
+
+    .figure.compact .image-box {
+      min-height: 330px;
+    }
+
+    .figure img {
+      width: 100%;
+      max-height: 720px;
+      object-fit: contain;
+    }
+
+    .figure.compact img {
+      max-height: 430px;
+    }
+
+    .caption {
+      min-height: 88px;
+      border-top: 2px solid var(--line);
+      padding: 14px 18px 16px;
+      background: #fbfdff;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .footer {
+      padding: 0 0 38px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 15px;
+    }
+  </style>
+</head>
 <body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#top">
+        <span class="ball" aria-hidden="true"></span>
+        <span>C班 Pokemon Open Data</span>
+      </a>
+      <nav class="nav" aria-label="ページ内メニュー">
+        <a href="#type">1. タイプ分布</a>
+        <a href="#fire-water">2. 炎・水比較</a>
+        <a href="#body">3. 体格と防御力</a>
+      </nav>
+    </div>
+  </header>
 
-<h1>C班　オープンデータ解析</h1>
-<h2>概要</h2>
-<p>「ポケットモンスター」ゲームシリーズに関する情報をまとめた「Poké API」より取得したデータの解析を行う。</p>
-<p><img src="pokeapi.png"alt="pokeapi ロゴ"></p>
-<br>
-<h2>解析</h2>
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero-panel">
+        <div>
+          <span class="badge">PokéAPI Analysis</span>
+          <h1>ポケモン<br>オープンデータ調査</h1>
+          <p class="lead">
+            PokéAPIから取得したデータを使い、タイプの分布、炎タイプと水タイプの能力差、
+            体重・身長と防御力の関係をグラフで整理しました。
+          </p>
+          <div class="source">
+            <img src="pokeapi.png" alt="PokéAPIのロゴ">
+            <p>
+              使用データはPokéAPIです。ポケモンのタイプ、攻撃力、防御力、
+              体重、身長などの項目を調査に使用しました。
+            </p>
+          </div>
+        </div>
+        <div class="hero-card">
+          <img src="images/pokemon_heatmap.png" alt="タイプ別ポケモン数のヒートマップ">
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <main class="wrap">
+    <div class="overview" aria-label="調査内容の概要">
+      <article class="overview-card">
+        <strong>1</strong>
+        <h2>タイプ分布</h2>
+        <p>どのタイプに何匹のポケモンが該当しているかを、ヒートマップで確認します。</p>
+      </article>
+      <article class="overview-card">
+        <strong>2</strong>
+        <h2>炎・水比較</h2>
+        <p>炎タイプと水タイプに絞り、攻撃力と防御力の差をグラフで見比べます。</p>
+      </article>
+      <article class="overview-card">
+        <strong>3</strong>
+        <h2>体格と防御力</h2>
+        <p>体重・身長の大きいポケモンを見ながら、防御力との関係を調べます。</p>
+      </article>
+    </div>
 
+    <section class="section" id="type">
+      <div class="section-head">
+        <div class="num">1</div>
+        <div>
+          <h2>どのタイプに何匹のポケモンがいるか</h2>
+          <p>
+            タイプごとの該当数をヒートマップで表示し、数が多いタイプ・少ないタイプを見つけやすくします。
+          </p>
+        </div>
+      </div>
+      <div class="figure-layout">
+        <article class="figure wide">
+          <h3><span class="dot"></span>pokemon_heatmap.png</h3>
+          <div class="image-box">
+            <img src="images/pokemon_heatmap.png" alt="タイプ別のポケモン数を表したヒートマップ">
+          </div>
+          <div class="caption">
+            タイプ別のポケモン数を色の濃さで確認するためのグラフです。
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="fire-water">
+      <div class="section-head">
+        <div class="num">2</div>
+        <div>
+          <h2>炎タイプ・水タイプの攻撃力と防御力の比較</h2>
+          <p>
+            炎タイプと水タイプを比較し、攻撃力・防御力にどのような差があるかを確認します。
+          </p>
+        </div>
+      </div>
+      <div class="figure-layout two">
+        <article class="figure compact">
+          <h3><span class="dot"></span>Average_attack_and_defense.png</h3>
+          <div class="image-box">
+            <img src="images/Average_attack_and_defense.png" alt="平均攻撃力と平均防御力のグラフ">
+          </div>
+          <div class="caption">
+            攻撃力と防御力の平均を確認するためのグラフです。
+          </div>
+        </article>
+        <article class="figure compact">
+          <h3><span class="dot"></span>Average_comparison.png</h3>
+          <div class="image-box">
+            <img src="images/Average_comparison.png" alt="炎タイプと水タイプの比較グラフ">
+          </div>
+          <div class="caption">
+            炎タイプと水タイプの能力値を比較するためのグラフです。
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="body">
+      <div class="section-head">
+        <div class="num">3</div>
+        <div>
+          <h2>体重・身長が大きいほど防御力は高いのか</h2>
+          <p>
+            体重・身長の大きいポケモンをピックアップし、体格と防御力の関係を複数の図で確認します。
+          </p>
+        </div>
+      </div>
+      <div class="figure-layout three">
+        <article class="figure wide">
+          <h3><span class="dot"></span>pokemon_body_vs_defense.png</h3>
+          <div class="image-box">
+            <img src="images/pokemon_body_vs_defense.png" alt="体重・身長と防御力の関係を示したグラフ">
+          </div>
+          <div class="caption">
+            体重・身長と防御力の関係を見るための中心となるグラフです。
+          </div>
+        </article>
+        <article class="figure compact">
+          <h3><span class="dot"></span>pokemon_lank.png</h3>
+          <div class="image-box">
+            <img src="images/pokemon_lank.png" alt="体格や能力に関するランキンググラフ">
+          </div>
+          <div class="caption">
+            大きいポケモンや数値が目立つポケモンをランキングで確認します。
+          </div>
+        </article>
+        <article class="figure compact">
+          <h3><span class="dot"></span>pokemon_scatter.png</h3>
+          <div class="image-box">
+            <img src="images/pokemon_scatter.png" alt="体格と防御力の散布図">
+          </div>
+          <div class="caption">
+            散布図を使い、体格と防御力の点のばらつきを確認します。
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <p>Data source: PokéAPI / Charts: images folder</p>
+  </footer>
 </body>
 </html>
